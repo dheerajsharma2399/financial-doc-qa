@@ -8,7 +8,7 @@ Local-first app that ingests **PDF/Excel** financial docs and answers questions 
 - Chunking (RecursiveCharacterTextSplitter)
 - Local embeddings: `nomic-embed-text` via Ollama
 - Vector store: **FAISS** (in-memory)
-- Chat LLM: `llama3.1:8b` (configurable) via Ollama
+-- Chat LLM: `mistral:7b` (configurable) via Ollama
 - Citations table (file/page/sheet/row)
 
 ## Prereqs
@@ -16,5 +16,6 @@ Local-first app that ingests **PDF/Excel** financial docs and answers questions 
 - [Ollama](https://ollama.com/download) running locally (default `http://localhost:11434`)
 - Pull models:
   ```bash
-  ollama pull llama3.1:8b
+  # Pull the Mistral 7B chat model and the embeddings model into Ollama
+  ollama pull mistral:7b
   ollama pull nomic-embed-text

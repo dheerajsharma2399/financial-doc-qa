@@ -103,12 +103,12 @@ st.title("📄 Financial Document Q&A Assistant (Local)")
 
 with st.sidebar:
     st.header("⚙️ Settings")
-    chat_model_name = st.text_input("Ollama Chat Model", value="llama3.1:8b")
+    chat_model_name = st.text_input("Ollama Chat Model", value="mistral:7b")
     emb_model_name = st.text_input("Ollama Embeddings Model", value="nomic-embed-text")
     temperature = st.slider("Temperature", 0.0, 1.0, 0.2, 0.05)
     max_tokens = st.number_input("Max tokens (num_predict)", 128, 4096, 768, 64)
     top_k = st.slider("Top-K Retrieval", 2, 12, 6, 1)
-    st.caption("Ensure Ollama is running locally and the models are pulled.")
+    st.caption("Ensure Ollama is running locally and the models are pulled (e.g. `mistral:7b` and embeddings).")
 
 # Session state
 if "vectorstore" not in st.session_state:
