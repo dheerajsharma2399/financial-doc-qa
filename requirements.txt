@@ -5,3 +5,5 @@ faiss-cpu==1.12.0
 pymupdf==1.24.9
 pandas==2.2.2
 numpy==2.1.1
+openpyxl
+xlrd

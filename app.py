@@ -11,9 +11,14 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-# --- Ollama (local) integrations via LangChain community ---
-from langchain_community.chat_models import ChatOllama
-from langchain_community.embeddings import OllamaEmbeddings
+# --- Ollama (local) integrations ---
+# Use the standalone langchain-ollama package (newer, non-deprecated integrations)
+try:
+    from langchain_ollama import ChatOllama, OllamaEmbeddings
+except Exception:
+    # Fallback to older community implementations if langchain-ollama is not installed
+    from langchain_community.chat_models import ChatOllama
+    from langchain_community.embeddings import OllamaEmbeddings
 
 # --- PDF/Excel parsing ---
 import fitz  # PyMuPDF
@@ -192,7 +197,26 @@ if user_q:
                 ctx = retrieve_context(st.session_state.vectorstore, user_q, k=top_k)
                 prompt = make_prompt(user_q, ctx)
                 llm = st.session_state.chat_model
-                answer = llm.predict(prompt)
+                # Newer LangChain chat models use `invoke`; fall back to `predict` if needed.
+                try:
+                    res = llm.invoke(prompt)
+                    # res might be a string or an LLMResult-like object
+                    if isinstance(res, str):
+                        answer = res
+                    else:
+                        # Try to extract generated text from common result shapes
+                        gens = getattr(res, "generations", None)
+                        if gens and len(gens) and len(gens[0]):
+                            answer = getattr(gens[0][0], "text", str(gens[0][0]))
+                        else:
+                            # Fallback to string conversion
+                            answer = str(res)
+                except Exception:
+                    # Older versions used predict()
+                    try:
+                        answer = llm.predict(prompt)
+                    except Exception as e:
+                        raise
             except Exception as e:
                 st.exception(e)
                 answer = "Sorry, I ran into an error generating the answer."
@@ -214,6 +238,6 @@ if user_q:
                             "row": d.metadata.get("row"),
                             "chars": len(d.page_content)
                         })
-                    st.dataframe(pd.DataFrame(rows), use_container_width=True)
+                    st.dataframe(pd.DataFrame(rows), width='stretch')
 
             st.session_state.messages.append({"role": "assistant", "content": answer})
