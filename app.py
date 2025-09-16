@@ -1,7 +1,12 @@
 import io
+import os
 import sys
 import time
 from typing import List, Tuple, Dict
+import os
+
+from dotenv import load_dotenv
+load_dotenv()
 
 import streamlit as st
 import pandas as pd
@@ -11,14 +16,16 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-# --- Ollama (local) integrations ---
-# Use the standalone langchain-ollama package (newer, non-deprecated integrations)
+# --- Google Gemini integrations ---
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+
+# --- Ollama integrations ---
 try:
-    from langchain_ollama import ChatOllama, OllamaEmbeddings
-except Exception:
-    # Fallback to older community implementations if langchain-ollama is not installed
-    from langchain_community.chat_models import ChatOllama
+    from langchain_community.llms import Ollama
     from langchain_community.embeddings import OllamaEmbeddings
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    OLLAMA_AVAILABLE = False
 
 # --- PDF/Excel parsing ---
 import fitz  # PyMuPDF
@@ -73,16 +80,38 @@ def normalize_and_chunk(text_batches: List[Tuple[str, Dict]], base_metadata: Dic
 # ----------------------------
 
 @st.cache_resource(show_spinner=False)
-def get_embeddings(model_name: str):
-    return OllamaEmbeddings(model=model_name)
+def get_embeddings(provider="Gemini Cloud API"):
+    if provider == "Gemini Cloud API":
+        return GoogleGenerativeAIEmbeddings(
+            model="models/embedding-001",
+            google_api_key=os.environ.get("GOOGLE_API_KEY")
+        )
+    elif provider == "Ollama (localhost)":
+        if not OLLAMA_AVAILABLE:
+            st.error("Ollama is not available. Please install `langchain-community` to use it.")
+            st.stop()
+        return OllamaEmbeddings(model="nomic-embed-text")
 
 @st.cache_resource(show_spinner=False)
-def get_chat_model(model_name: str, temperature: float, max_tokens: int):
-    # ChatOllama uses Ollama locally at http://localhost:11434
-    return ChatOllama(model=model_name, temperature=temperature, num_predict=max_tokens)
+def get_chat_model(provider, temperature: float, max_tokens: int):
+    if provider == "Gemini Cloud API":
+        return ChatGoogleGenerativeAI(
+            model="gemini-1.5-pro-latest",
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+            google_api_key=os.environ.get("GOOGLE_API_KEY")
+        )
+    elif provider == "Ollama (localhost)":
+        if not OLLAMA_AVAILABLE:
+            st.error("Ollama is not available. Please install `langchain-community` to use it.")
+            st.stop()
+        return Ollama(
+            model="mistral",
+            temperature=temperature,
+        )
 
-def build_vectorstore(all_docs: List[Document], embed_model_name: str):
-    emb = get_embeddings(embed_model_name)
+def build_vectorstore(all_docs: List[Document], provider: str):
+    emb = get_embeddings(provider)
     return FAISS.from_documents(all_docs, emb)
 
 def retrieve_context(vs: FAISS, query: str, k: int = 6) -> List[Document]:
@@ -103,17 +132,25 @@ def make_prompt(user_q: str, context_docs: List[Document]) -> str:
 # Streamlit UI
 # ----------------------------
 
-st.set_page_config(page_title="Financial Doc Q&A (Local)", page_icon="💬", layout="wide")
-st.title("📄 Financial Document Q&A Assistant (Local)")
+st.set_page_config(page_title="Financial Doc Q&A", page_icon="💬", layout="wide")
+st.title("📄 Financial Document Q&A Assistant")
 
 with st.sidebar:
     st.header("⚙️ Settings")
-    chat_model_name = st.text_input("Ollama Chat Model", value="mistral:7b")
-    emb_model_name = st.text_input("Ollama Embeddings Model", value="nomic-embed-text")
+    model_provider = st.selectbox(
+        "Choose your model provider",
+        ("Gemini Cloud API", "Ollama (localhost)")
+    )
+
+    if model_provider == "Gemini Cloud API":
+        st.caption("Models: `Gemini 1.5 Pro` and `embedding-001`.")
+    else:
+        st.caption("Using Ollama models from localhost.")
+
     temperature = st.slider("Temperature", 0.0, 1.0, 0.2, 0.05)
-    max_tokens = st.number_input("Max tokens (num_predict)", 128, 4096, 768, 64)
+    max_tokens = st.number_input("Max tokens", 128, 4096, 768, 64)
     top_k = st.slider("Top-K Retrieval", 2, 12, 6, 1)
-    st.caption("Ensure Ollama is running locally and the models are pulled (e.g. `mistral:7b` and embeddings).")
+
 
 # Session state
 if "vectorstore" not in st.session_state:
@@ -166,9 +203,9 @@ if build_clicked:
                 st.stop()
 
             try:
-                vs = build_vectorstore(all_docs, emb_model_name)
+                vs = build_vectorstore(all_docs, model_provider)
                 st.session_state.vectorstore = vs
-                st.session_state.chat_model = get_chat_model(chat_model_name, temperature, int(max_tokens))
+                st.session_state.chat_model = get_chat_model(model_provider, temperature, int(max_tokens))
                 status.update(label="Index built successfully ✅", state="complete", expanded=False)
                 st.toast("Index ready.", icon="✅")
             except Exception as e:

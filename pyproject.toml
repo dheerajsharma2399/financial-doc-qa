@@ -2,29 +2,15 @@
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "financial-doc-qa"
-version = "0.1.0"
-description = "Financial Document Q&A Assistant (Streamlit + Ollama + FAISS)"
-readme = "README.md"
-license = { text = "MIT" }
-requires-python = ">=3.11,<3.14"
-authors = [ { name = "dheerajsharma2399" } ]
-
-dependencies = [
-  "streamlit==1.38.0",
-  "langchain==0.2.14",
-  "langchain-community==0.2.12",
-  "faiss-cpu==1.12.0",
-  "pymupdf==1.26.4",
-  "pandas==2.2.2",
-  "numpy==2.1.1",
-  "openpyxl",
-  "xlrd",
-]
-
-[project.optional-dependencies]
-dev = ["pytest>=7.0", "black>=24.0"]
-
-[tool.setuptools]
-# No package modules to build; app runs via Streamlit entrypoint (streamlit run app.py)
+[tool.poetry.dependencies]
+python = "^3.11"
+ipykernel = "^6.29.5"
+langchain = ">=0.1.16"
+langchain-google-genai = ">=0.1.0"
+streamlit = ">=1.32.0"
+faiss-cpu = ">=1.8.0"
+pypdf = ">=4.1.0"
+openpyxl = ">=3.1.2"
+pandas = ">=2.2.1"
+pymupdf = ">=1.24.0"
+langchain-community = ">=0.0.32"
