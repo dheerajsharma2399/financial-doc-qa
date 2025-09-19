@@ -139,7 +139,7 @@ with st.sidebar:
     st.header("⚙️ Settings")
     model_provider = st.selectbox(
         "Choose your model provider",
-        ("Gemini Cloud API", "Ollama (localhost)")
+        ("Ollama (localhost)", "Gemini Cloud API")
     )
 
     if model_provider == "Gemini Cloud API":
@@ -275,6 +275,6 @@ if user_q:
                             "row": d.metadata.get("row"),
                             "chars": len(d.page_content)
                         })
-                    st.dataframe(pd.DataFrame(rows), width='stretch')
+                    st.dataframe(pd.DataFrame(rows), use_container_width=True)
 
             st.session_state.messages.append({"role": "assistant", "content": answer})

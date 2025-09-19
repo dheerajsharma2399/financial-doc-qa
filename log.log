@@ -1,34 +1,15 @@
-GoogleGenerativeAIError: Error embedding content: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
-  quota_metric: "generativelanguage.googleapis.com/embed_content_free_tier_requests"
-  quota_id: "EmbedContentRequestsPerDayPerUserPerProjectPerModel-FreeTier"
-}
-violations {
-  quota_metric: "generativelanguage.googleapis.com/embed_content_free_tier_requests"
-  quota_id: "EmbedContentRequestsPerMinutePerUserPerProjectPerModel-FreeTier"
-}
-violations {
-  quota_metric: "generativelanguage.googleapis.com/embed_content_free_tier_requests"
-  quota_id: "EmbedContentRequestsPerMinutePerProjectPerModel-FreeTier"
-}
-violations {
-  quota_metric: "generativelanguage.googleapis.com/embed_content_free_tier_requests"
-  quota_id: "EmbedContentRequestsPerDayPerProjectPerModel-FreeTier"
-}
-, links {
-  description: "Learn more about Gemini API quotas"
-  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
-}
-]
-
-File "E:\Assignment_data\financial-doc-qa\app.py", line 206, in <module>
-    vs = build_vectorstore(all_docs, model_provider)
-File "E:\Assignment_data\financial-doc-qa\app.py", line 115, in build_vectorstore
-    return FAISS.from_documents(all_docs, emb)
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
-File "E:\Assignment_data\financial-doc-qa\.venv\Lib\site-packages\langchain_core\vectorstores\base.py", line 837, in from_documents
-    return cls.from_texts(texts, embedding, metadatas=metadatas, **kwargs)
-           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-File "E:\Assignment_data\financial-doc-qa\.venv\Lib\site-packages\langchain_community\vectorstores\faiss.py", line 1043, in from_texts
-    embeddings = embedding.embed_documents(texts)
-File "E:\Assignment_data\financial-doc-qa\.venv\Lib\site-packages\langchain_google_genai\embeddings.py", line 289, in embed_documents
-    raise GoogleGenerativeAIError(f"Error embedding content: {e}") from e
+TypeError: 'str' object cannot be interpreted as an integer
+Traceback:
+File "E:\Assignment_data\financial-doc-qa\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\exec_code.py", line 88, in exec_func_with_error_handling
+    result = func()
+File "E:\Assignment_data\financial-doc-qa\.venv\Lib\site-packages\streamlit\runtime\scriptrunner\script_runner.py", line 590, in code_to_exec
+    exec(code, module.__dict__)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+File "E:\Assignment_data\financial-doc-qa\app.py", line 278, in <module>
+    st.dataframe(pd.DataFrame(rows), width='stretch')
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "E:\Assignment_data\financial-doc-qa\.venv\Lib\site-packages\streamlit\runtime\metrics_util.py", line 410, in wrapped_func
+    result = non_optional_func(*args, **kwargs)
+File "E:\Assignment_data\financial-doc-qa\.venv\Lib\site-packages\streamlit\elements\arrow.py", line 521, in dataframe
+    proto.width = width
+    ^^^^^^^^^^^
