@@ -90,13 +90,13 @@ def get_embeddings(provider="Gemini Cloud API"):
         if not OLLAMA_AVAILABLE:
             st.error("Ollama is not available. Please install `langchain-community` to use it.")
             st.stop()
-        return OllamaEmbeddings(model="nomic-embed-text")
+        return OllamaEmbeddings(model="mistral")
 
 @st.cache_resource(show_spinner=False)
 def get_chat_model(provider, temperature: float, max_tokens: int):
     if provider == "Gemini Cloud API":
         return ChatGoogleGenerativeAI(
-            model="gemini-1.5-pro-latest",
+            model="gemini-2.5-pro-latest",
             temperature=temperature,
             max_output_tokens=max_tokens,
             google_api_key=os.environ.get("GOOGLE_API_KEY")
