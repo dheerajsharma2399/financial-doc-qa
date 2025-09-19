@@ -16,8 +16,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-# --- Google Gemini integrations ---
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+# --- OpenAI integrations (for OpenRouter) ---
+from langchain_openai import ChatOpenAI
 
 # --- Ollama integrations ---
 try:
@@ -80,34 +80,29 @@ def normalize_and_chunk(text_batches: List[Tuple[str, Dict]], base_metadata: Dic
 # ----------------------------
 
 @st.cache_resource(show_spinner=False)
-def get_embeddings(provider="Gemini Cloud API"):
-    if provider == "Gemini Cloud API":
-        return GoogleGenerativeAIEmbeddings(
-            model="models/embedding-001",
-            google_api_key=os.environ.get("GOOGLE_API_KEY")
-        )
-    elif provider == "Ollama (localhost)":
-        if not OLLAMA_AVAILABLE:
-            st.error("Ollama is not available. Please install `langchain-community` to use it.")
-            st.stop()
-        return OllamaEmbeddings(model="mistral")
+def get_embeddings(provider="Ollama (localhost)"):
+    if not OLLAMA_AVAILABLE:
+        st.error("Ollama is not available. Please install `langchain-community` to use it.")
+        st.stop()
+    return OllamaEmbeddings(model="mistral")
 
 @st.cache_resource(show_spinner=False)
 def get_chat_model(provider, temperature: float, max_tokens: int):
-    if provider == "Gemini Cloud API":
-        return ChatGoogleGenerativeAI(
-            model="gemini-2.5-pro-latest",
-            temperature=temperature,
-            max_output_tokens=max_tokens,
-            google_api_key=os.environ.get("GOOGLE_API_KEY")
-        )
-    elif provider == "Ollama (localhost)":
+    if provider == "Ollama (localhost)":
         if not OLLAMA_AVAILABLE:
             st.error("Ollama is not available. Please install `langchain-community` to use it.")
             st.stop()
         return Ollama(
             model="mistral",
             temperature=temperature,
+        )
+    elif provider == "OpenRouter":
+        return ChatOpenAI(
+            openai_api_base="https://openrouter.ai/api/v1",
+            openai_api_key=os.environ.get("OPENROUTER_API_KEY"),
+            temperature=temperature,
+            max_tokens=max_tokens,
+            model_name="deepseek/deepseek-chat-v3.1:free", # Example model, user can change
         )
 
 def build_vectorstore(all_docs: List[Document], provider: str):
@@ -139,11 +134,11 @@ with st.sidebar:
     st.header("⚙️ Settings")
     model_provider = st.selectbox(
         "Choose your model provider",
-        ("Ollama (localhost)", "Gemini Cloud API")
+        ("OpenRouter", "Ollama (localhost)")
     )
 
-    if model_provider == "Gemini Cloud API":
-        st.caption("Models: `Gemini 1.5 Pro` and `embedding-001`.")
+    if model_provider == "OpenRouter":
+        st.caption("Using models from OpenRouter.ai.")
     else:
         st.caption("Using Ollama models from localhost.")
 

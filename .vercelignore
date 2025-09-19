@@ -1,0 +1,11 @@
+.venv
+.venv311
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+app.log
+log.log
+.devcontainer
