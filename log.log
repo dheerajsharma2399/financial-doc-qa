@@ -1,45 +1,13 @@
-[{
-	"resource": "/e:/Assignment_data/financial-doc-qa/app.py",
-	"owner": "pylance",
-	"severity": 8,
-	"message": "\"[\" was not closed",
-	"source": "Pylance",
-	"startLineNumber": 52,
-	"startColumn": 65,
-	"endLineNumber": 52,
-	"endColumn": 66,
-	"origin": "extHost1"
-},{
-	"resource": "/e:/Assignment_data/financial-doc-qa/app.py",
-	"owner": "pylance",
-	"severity": 8,
-	"message": "Expected \":\"",
-	"source": "Pylance",
-	"startLineNumber": 287,
-	"startColumn": 1,
-	"endLineNumber": 287,
-	"endColumn": 1,
-	"origin": "extHost1"
-},{
-	"resource": "/e:/Assignment_data/financial-doc-qa/app.py",
-	"owner": "pylance",
-	"severity": 8,
-	"message": "Expected expression",
-	"source": "Pylance",
-	"startLineNumber": 287,
-	"startColumn": 1,
-	"endLineNumber": 287,
-	"endColumn": 1,
-	"origin": "extHost1"
-},{
-	"resource": "/e:/Assignment_data/financial-doc-qa/app.py",
-	"owner": "pylance",
-	"severity": 8,
-	"message": "Statements must be separated by newlines or semicolons",
-	"source": "Pylance",
-	"startLineNumber": 287,
-	"startColumn": 1,
-	"endLineNumber": 287,
-	"endColumn": 1,
-	"origin": "extHost1"
-}]
+AttributeError: 'NoneType' object has no attribute 'embed_documents'
+Traceback:
+File "E:\Assignment_data\financial-doc-qa\app.py", line 215, in <module>
+    vs = build_vectorstore(all_docs, model_provider)
+File "E:\Assignment_data\financial-doc-qa\app.py", line 122, in build_vectorstore
+    return FAISS.from_documents(all_docs, emb)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+File "E:\Assignment_data\financial-doc-qa\.venv\Lib\site-packages\langchain_core\vectorstores\base.py", line 835, in from_documents
+    return cls.from_texts(texts, embedding, metadatas=metadatas, **kwargs)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "E:\Assignment_data\financial-doc-qa\.venv\Lib\site-packages\langchain_community\vectorstores\faiss.py", line 1039, in from_texts
+    embeddings = embedding.embed_documents(texts)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^

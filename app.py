@@ -16,11 +16,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-# --- Google Generative AI integrations ---
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
 # --- Hugging Face integrations ---
-from langchain_huggingface import HuggingFaceEndpoint, HuggingFaceEndpointEmbeddings
+
 
 # --- OpenAI integrations (for OpenRouter) ---
 from langchain_openai import ChatOpenAI
@@ -87,18 +84,14 @@ def normalize_and_chunk(text_batches: List[Tuple[str, Dict]], base_metadata: Dic
 
 @st.cache_resource(show_spinner=False)
 def get_embeddings(provider="Hugging Face"):
-    if provider == "Hugging Face":
-        return HuggingFaceEndpointEmbeddings(
-            model="sentence-transformers/all-MiniLM-L6-v2",
-            huggingfacehub_api_token=os.environ.get("HUGGINGFACEHUB_API_TOKEN"),
-        )
-    elif provider == "Ollama (localhost)":
+    if provider == "Ollama (localhost)":
         if not OLLAMA_AVAILABLE:
-            st.error("Ollama is not available. Please install `langchain-community` to use it.")
-            st.stop()
-        return OllamaEmbeddings(model="mistral")
-    elif provider == "Google Generative AI":
-        return GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+            raise ValueError("Ollama is not available. Please install `langchain-community` to use it.")
+        try:
+            emb = OllamaEmbeddings(model="nomic-embed-text") # User needs to ensure this model is available via Ollama
+            return emb
+        except Exception as e:
+            raise ValueError(f"Failed to initialize OllamaEmbeddings. Ensure Ollama server is running and 'nordic-embed-text' model is pulled. Error: {e}")
 
 @st.cache_resource(show_spinner=False)
 def get_chat_model(provider, temperature: float, max_tokens: int):
@@ -146,17 +139,18 @@ st.title("📄 Financial Document Q&A Assistant")
 
 with st.sidebar:
     st.header("⚙️ Settings")
-    model_provider = st.selectbox(
-        "Choose your model provider",
-        ("OpenRouter", "Hugging Face", "Ollama (localhost)", "Google Generative AI")
+    chat_model_provider = st.selectbox(
+        "Choose your chat model provider",
+        ("OpenRouter", "Ollama (localhost)")
     )
 
-    if model_provider == "OpenRouter":
+    embedding_provider = st.selectbox(
+        "Choose your embedding model provider",
+        ("Ollama (localhost)")
+    )
+
+    if chat_model_provider == "OpenRouter":
         st.caption("Using models from OpenRouter.ai.")
-    elif model_provider == "Hugging Face":
-        st.caption("Using free models from Hugging Face.")
-    elif model_provider == "Google Generative AI":
-        st.caption("Using Google Generative AI models.")
     else:
         st.caption("Using Ollama models from localhost.")
 
@@ -216,9 +210,9 @@ if build_clicked:
                 st.stop()
 
             try:
-                vs = build_vectorstore(all_docs, model_provider)
+                vs = build_vectorstore(all_docs, embedding_provider)
                 st.session_state.vectorstore = vs
-                st.session_state.chat_model = get_chat_model(model_provider, temperature, int(max_tokens))
+                st.session_state.chat_model = get_chat_model(chat_model_provider, temperature, int(max_tokens))
                 status.update(label="Index built successfully ✅", state="complete", expanded=False)
                 st.toast("Index ready.", icon="✅")
             except Exception as e:
