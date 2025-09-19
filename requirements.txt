@@ -9,3 +9,4 @@ openpyxl
 xlrd
 python-dotenv
 langchain-openai
+langchain-huggingface

@@ -16,6 +16,9 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
+# --- Hugging Face integrations ---
+from langchain_huggingface import HuggingFaceEndpoint, HuggingFaceEndpointEmbeddings
+
 # --- OpenAI integrations (for OpenRouter) ---
 from langchain_openai import ChatOpenAI
 
@@ -35,7 +38,7 @@ import pandas as pd
 # Helpers: extraction
 # ----------------------------
 
-def extract_pdf_text(file_bytes: bytes) -> List[Tuple[str, Dict]]:
+def extract_pdf_text(file_bytes: bytes) -> List[Tuple[str, Dict]:
     """Return list of (chunk_text, metadata) from a PDF."""
     chunks = []
     with fitz.open(stream=file_bytes, filetype="pdf") as doc:
@@ -46,7 +49,7 @@ def extract_pdf_text(file_bytes: bytes) -> List[Tuple[str, Dict]]:
                 chunks.append((txt, {"type": "pdf", "page": page_num + 1}))
     return chunks
 
-def extract_excel_text(file_bytes: bytes, filename: str) -> List[Tuple[str, Dict]]:
+def extract_excel_text(file_bytes: bytes, filename: str) -> List[Tuple[str, Dict]:
     """Return list of (chunk_text, metadata) from ALL sheets of an Excel file."""
     chunks = []
     xls = pd.ExcelFile(io.BytesIO(file_bytes))
@@ -80,29 +83,35 @@ def normalize_and_chunk(text_batches: List[Tuple[str, Dict]], base_metadata: Dic
 # ----------------------------
 
 @st.cache_resource(show_spinner=False)
-def get_embeddings(provider="Ollama (localhost)"):
-    if not OLLAMA_AVAILABLE:
-        st.error("Ollama is not available. Please install `langchain-community` to use it.")
-        st.stop()
-    return OllamaEmbeddings(model="mistral")
-
-@st.cache_resource(show_spinner=False)
-def get_chat_model(provider, temperature: float, max_tokens: int):
-    if provider == "Ollama (localhost)":
+def get_embeddings(provider="Hugging Face"):
+    if provider == "Hugging Face":
+        return HuggingFaceEndpointEmbeddings(
+            model="sentence-transformers/all-MiniLM-L6-v2",
+            huggingfacehub_api_token=os.environ.get("HUGGINGFACEHUB_API_TOKEN"),
+        )
+    elif provider == "Ollama (localhost)":
         if not OLLAMA_AVAILABLE:
             st.error("Ollama is not available. Please install `langchain-community` to use it.")
             st.stop()
-        return Ollama(
-            model="mistral",
-            temperature=temperature,
-        )
-    elif provider == "OpenRouter":
+        return OllamaEmbeddings(model="mistral")
+
+@st.cache_resource(show_spinner=False)
+def get_chat_model(provider, temperature: float, max_tokens: int):
+    if provider == "OpenRouter":
         return ChatOpenAI(
             openai_api_base="https://openrouter.ai/api/v1",
             openai_api_key=os.environ.get("OPENROUTER_API_KEY"),
             temperature=temperature,
             max_tokens=max_tokens,
             model_name="deepseek/deepseek-chat-v3.1:free", # Example model, user can change
+        )
+    elif provider == "Ollama (localhost)":
+        if not OLLAMA_AVAILABLE:
+            st.error("Ollama is not available. Please install `langchain-community` to use it.")
+            st.stop()
+        return Ollama(
+            model="mistral",
+            temperature=temperature,
         )
 
 def build_vectorstore(all_docs: List[Document], provider: str):
@@ -134,11 +143,13 @@ with st.sidebar:
     st.header("⚙️ Settings")
     model_provider = st.selectbox(
         "Choose your model provider",
-        ("OpenRouter", "Ollama (localhost)")
+        ("OpenRouter", "Hugging Face", "Ollama (localhost)")
     )
 
     if model_provider == "OpenRouter":
         st.caption("Using models from OpenRouter.ai.")
+    elif model_provider == "Hugging Face":
+        st.caption("Using free models from Hugging Face.")
     else:
         st.caption("Using Ollama models from localhost.")
 
@@ -154,6 +165,58 @@ if "chat_model" not in st.session_state:
     st.session_state.chat_model = None
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+st.subheader("Upload Documents (PDF / Excel)")
+files = st.file_uploader(
+    "Drop one or more files",
+    type=["pdf", "xlsx", "xls"],
+    accept_multiple_files=True
+)
+
+col_a, col_b = st.columns(2)
+build_clicked = col_a.button("🔍 Process & Build Index", use_container_width=True)
+clear_clicked = col_b.button("🧹 Clear Session", use_container_width=True)
+
+if clear_clicked:
+    st.session_state.vectorstore = None
+    st.session_state.chat_model = None
+    st.session_state.messages = []
+    st.toast("Session cleared.", icon="🧹")
+
+if build_clicked:
+    if not files:
+        st.error("Please upload at least one PDF or Excel file.")
+    else:
+        with st.status("Parsing and indexing...", expanded=True) as status:
+            all_docs: List[Document] = []
+            for f in files:
+                st.write(f"Reading: **{f.name}**")
+                try:
+                    data = f.read()
+                    base_md = {"file": f.name}
+                    if f.type == "application/pdf" or f.name.lower().endswith(".pdf"):
+                        raw = extract_pdf_text(data)
+                    else:
+                        raw = extract_excel_text(data, f.name)
+                    docs = normalize_and_chunk(raw, base_md)
+                    all_docs.extend(docs)
+                    st.write(f" → {len(docs)} chunks.")
+                except Exception as e:
+                    st.exception(e)
+
+            if not all_docs:
+                st.error("No content extracted from the uploaded files.")
+                st.stop()
+
+            try:
+                vs = build_vectorstore(all_docs, model_provider)
+                st.session_state.vectorstore = vs
+                st.session_state.chat_model = get_chat_model(model_provider, temperature, int(max_tokens))
+                status.update(label="Index built successfully ✅", state="complete", expanded=False)
+                st.toast("Index ready.", icon="✅")
+            except Exception as e:
+                st.exception(e)
+                st.stop()
 
 st.subheader("Upload Documents (PDF / Excel)")
 files = st.file_uploader(

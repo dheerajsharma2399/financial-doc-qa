@@ -1,3 +1,24 @@
-404: NOT_FOUND
-Code: NOT_FOUND
-ID: bom1::7wngr-1758275753296-31df82bb7d44
+15:34:46.000 Running build in Washington, D.C., USA (East) – iad1
+15:34:46.000 Build machine configuration: 2 cores, 8 GB
+15:34:46.014 Cloning github.com/dheerajsharma2399/financial-doc-qa (Branch: main, Commit: 50c1f7d)
+15:34:46.186 Previous build caches not available
+15:34:46.361 Cloning completed: 347.000ms
+15:34:46.393 Found .vercelignore
+15:34:46.405 Removed 82 ignored files defined in .vercelignore
+15:34:46.406   /__pycache__/app.cpython-313.pyc
+15:34:46.406   /.devcontainer/devcontainer.json
+15:34:46.406   /.git/config
+15:34:46.406   /.git/description
+15:34:46.406   /.git/FETCH_HEAD
+15:34:46.406   /.git/HEAD
+15:34:46.406   /.git/hooks/applypatch-msg.sample
+15:34:46.406   /.git/hooks/commit-msg.sample
+15:34:46.407   /.git/hooks/fsmonitor-watchman.sample
+15:34:46.407   /.git/hooks/post-update.sample
+15:34:46.630 Running "vercel build"
+15:34:47.014 Vercel CLI 48.0.2
+15:34:47.180 WARN! Due to `builds` existing in your configuration file, the Build and Development Settings defined in your Project Settings will not apply. Learn More: https://vercel.link/unused-build-settings
+15:34:47.480 Installing required dependencies...
+15:35:08.583 Build Completed in /vercel/output [21s]
+15:35:09.103 Deploying outputs...
+15:35:35.683 Error: A Serverless Function has exceeded the unzipped maximum size of 250 MB. : https://vercel.link/serverless-function-size
